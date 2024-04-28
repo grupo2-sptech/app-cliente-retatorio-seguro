@@ -3,6 +3,7 @@ package org.example;
 import com.github.britooo.looca.api.core.Looca;
 import org.example.db.*;
 
+import java.io.Console;
 import java.sql.*;
 import java.text.DecimalFormat;
 import java.util.Scanner;
@@ -19,6 +20,7 @@ public class Main {
         boolean isAuthenticated = false;
         Looca looca = new Looca();
         Funcionalidades funcionalidades = new Funcionalidades();
+        Console console = System.console();
 
         // Limpa o console e exibe as mensagens iniciais
         limparConsole();
@@ -56,7 +58,14 @@ public class Main {
             utils.centralizaTelaHorizontal(22);
             System.out.println("Senha:");
             utils.centralizaTelaHorizontal(22);
-            String senha = sc.next();
+            String senha;
+            if (console != null) {
+                char[] passwordArray = console.readPassword();
+                senha = new String(passwordArray);
+            } else {
+                senha = sc.next();
+            }
+
 
             try (
                     Connection conn = DB.getConection();
