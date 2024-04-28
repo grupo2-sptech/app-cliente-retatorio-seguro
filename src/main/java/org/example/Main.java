@@ -20,7 +20,6 @@ public class Main {
         Looca looca = new Looca();
         Funcionalidades funcionalidades = new Funcionalidades();
 
-
         // Limpa o console e exibe as mensagens iniciais
         limparConsole();
         utils.exibirLogo();
@@ -37,18 +36,17 @@ public class Main {
         final String insertAccessQuery = "INSERT INTO acesso_usuario (fkAcessoUsuario, data_entrada) VALUES (?, now())";
 
         final String getAccessIdQuery = """
-            SELECT IdAcessoUsuario FROM acesso_usuario 
-            WHERE fkAcessoUsuario = ? AND data_saida IS NULL 
+            SELECT IdAcessoUsuario FROM acesso_usuario
+            WHERE fkAcessoUsuario = ? AND data_saida IS NULL
             ORDER BY data_entrada DESC LIMIT 1;
         """;
 
         final String updateExitQuery = """
-            UPDATE acesso_usuario SET data_saida = now() 
+            UPDATE acesso_usuario SET data_saida = now()
             WHERE fkAcessoUsuario = ? AND IdAcessoUsuario = ?;
         """;
 
         do {
-
             utils.centralizaTelaHorizontal(22);
             System.out.println("Email:");
             utils.centralizaTelaHorizontal(22);
@@ -61,7 +59,6 @@ public class Main {
             String senha = sc.next();
 
             try (
-
                     Connection conn = Db.getConection();
                     PreparedStatement pstmtAuth = conn.prepareStatement(authQuery);
                     PreparedStatement pstmtInsertAccess = conn.prepareStatement(insertAccessQuery);
