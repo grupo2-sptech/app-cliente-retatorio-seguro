@@ -1,7 +1,7 @@
 package org.example;
 
 import com.github.britooo.looca.api.core.Looca;
-import org.example.Db.Db;
+import org.example.db.DB;
 
 import java.io.BufferedReader;
 import java.io.IOException;

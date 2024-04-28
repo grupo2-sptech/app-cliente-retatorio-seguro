@@ -1,7 +1,7 @@
 package org.example;
 
 import com.github.britooo.looca.api.core.Looca;
-import org.example.Db.Db;
+import org.example.db.*;
 
 import java.sql.*;
 import java.text.DecimalFormat;
@@ -59,7 +59,7 @@ public class Main {
             String senha = sc.next();
 
             try (
-                    Connection conn = Db.getConection();
+                    Connection conn = DB.getConection();
                     PreparedStatement pstmtAuth = conn.prepareStatement(authQuery);
                     PreparedStatement pstmtInsertAccess = conn.prepareStatement(insertAccessQuery);
                     PreparedStatement pstmtGetAccessId = conn.prepareStatement(getAccessIdQuery);
