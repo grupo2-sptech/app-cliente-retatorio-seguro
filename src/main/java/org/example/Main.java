@@ -113,8 +113,7 @@ public class Main {
                         do {
 
 
-
-
+                            System.out.println();
                             System.out.println("1 - Informações sobre minha máquina");
                             System.out.println("2 - Uso de Hardware atual");
                             System.out.println("3 - Relatório de Acesso");
@@ -275,7 +274,7 @@ public class Main {
                                     }
 
 
-                                    // Executa a query para uso médio de RAM
+                                    
                                     try (ResultSet rsUsoMedioRamDia = pstmUsoMedioRamDia.executeQuery()) {
                                         if (rsUsoMedioRamDia.next()) {
                                             Double usoMedioRam = rsUsoMedioRamDia.getDouble("ram_ocupada");
@@ -287,7 +286,7 @@ public class Main {
                                         }
                                     }
 
-                                    // Executa a query para uso médio de CPU
+
                                     try (ResultSet rsUsoMedioCpuDia = pstmUsoMedioCpuDia.executeQuery()) {
                                         if (rsUsoMedioCpuDia.next()) {
                                             Double usoMedioCpu = rsUsoMedioCpuDia.getDouble("cpu_ocupada");
@@ -299,7 +298,7 @@ public class Main {
                                         }
                                     }
 
-                                    // Executa a query para máximo de RAM
+
                                     try (ResultSet rsMaximoRamDia = pstmMaximoRamDia.executeQuery()) {
                                         if (rsMaximoRamDia.next()) {
                                             Double maximoRam = rsMaximoRamDia.getDouble("ram_ocupada");
@@ -312,13 +311,14 @@ public class Main {
                                         }
                                     }
 
-                                    // Executa a query para máximo de CPU
+
                                     try (ResultSet rsMaximoCpuDia = pstmMaximoCpuDia.executeQuery()) {
                                         if (rsMaximoCpuDia.next()) {
                                             Double maximoCpu = rsMaximoCpuDia.getDouble("cpu_ocupada");
                                             String dataHoraMaximoCpu = rsMaximoCpuDia.getString("data_hora");
                                             utils.centralizaTelaHorizontal(15);
                                             System.out.printf("Máximo de CPU: %.2f %% em %s%n", maximoCpu, dataHoraMaximoCpu);
+                                            System.out.println();
                                         } else {
                                             utils.centralizaTelaHorizontal(15);
                                             System.out.println("Nenhum dado disponível para o máximo de CPU.");

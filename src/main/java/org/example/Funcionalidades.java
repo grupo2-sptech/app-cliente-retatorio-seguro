@@ -131,6 +131,7 @@ public class Funcionalidades {
         System.out.println("Volume de Disco em uso: %.2f  GB".formatted(Math.round((double) looca.getGrupoDeDiscos().getDiscos().get(0).getTamanho() / Math.pow(1024, 3) * 100.0) / 100.0));
         utilitarios.centralizaTelaHorizontal(15);
         System.out.println();
+        System.out.println();
 
 
     }
