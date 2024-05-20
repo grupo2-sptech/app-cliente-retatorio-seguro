@@ -114,6 +114,26 @@ public class Utilitarios {
             FucionalidadeConsole.limparConsole();
         }
     }
+
+    public void exibirMenuSelecao() {
+        System.out.println("""
+                           
+                        __________________________________________________________________
+                        |                  SELECIONE UMA OPÇÃO:                          |
+                        |________________________________________________________________|
+                        |                                                                |
+                        | 1 - Informações sobre minha máquina                            |
+                        | 2 - Uso de Hardware atual                                      |
+                        | 3 - Relatório de Acesso                                        |
+                        | 4 - Relatório de uso diário                                    |
+                        | 5 - Sair                                                       |
+                        |________________________________________________________________|
+                         
+                """);
+    }
+
 }
+
+
 
 

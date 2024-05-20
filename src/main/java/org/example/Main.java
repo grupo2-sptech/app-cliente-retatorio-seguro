@@ -39,6 +39,24 @@ public class Main {
                 break;
             }
         } while (true);
-        maquina.monitoramento(maquina);
+
+
+
+        Thread thread01 = new Thread(() -> {
+            try{
+                maquina.monitoramento(maquina);
+            } catch (InterruptedException | SQLException e) {
+                e.printStackTrace();
+            }
+        });
+
+        Thread thread02 = new Thread(() -> {
+            utilitarios.mensagemInformativa();
+            utilitarios.exibirMenuSelecao();
+            thread01.start();
+        });
+
+        thread02.start();
+
     }
 }

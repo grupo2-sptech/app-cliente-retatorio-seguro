@@ -12,17 +12,23 @@ public class Usuario {
     private String email;
     private String senha;
     private String login;
+    private String dataEntrada;
+    private String dataSaida;
+    private String idUsuario;
 
     Console console = System.console();
 
     public Usuario() {
     }
 
-    public Usuario(String nome, String email, String senha, String login) {
+    public Usuario(String nome, String email, String senha, String login, String dataEntrada, String dataSaida, String idUsuario) {
         this.nome = nome;
         this.email = email;
         this.senha = senha;
         this.login = login;
+        this.dataEntrada = dataEntrada;
+        this.dataSaida = dataSaida;
+        this.idUsuario = idUsuario;
     }
 
     public Usuario(String email, String senha, String login) {
@@ -52,7 +58,7 @@ public class Usuario {
         DaoUsuarioImple daoUsuario = new DaoUsuarioImple();
 
         if (!login.equals(null) && !login.equals("") && !senha.equals(null) && !senha.equals("")) {
-            Usuario usuario = daoUsuario.validarUsuarioMysql(login, senha);
+            Usuario usuario = daoUsuario.validarUsuarioSql(login, senha);
             if (usuario.getNome() == null) {
                 return false;
             }
