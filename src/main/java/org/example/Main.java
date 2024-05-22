@@ -1,6 +1,8 @@
 package org.example;
 
 import com.github.britooo.looca.api.core.Looca;
+import org.example.dao.DaoMaquina;
+import org.example.dao.Implementation.DaoMaquinaImple;
 import org.example.entities.Maquina;
 import org.example.entities.Usuario;
 import org.example.entities.component.Registro;
@@ -15,6 +17,7 @@ public class Main {
         Utilitarios utilitarios = new Utilitarios();
         FucionalidadeConsole fucionalidadeConsole = new FucionalidadeConsole();
         Usuario usuario = new Usuario();
+        DaoMaquina daoMaquina = new DaoMaquinaImple();
         Looca looca = new Looca();
         Maquina maquina = new Maquina(
                 null,
@@ -26,36 +29,53 @@ public class Main {
                 looca.getSistema().getArquitetura()
         );
 
-        do {
-            fucionalidadeConsole.limparConsole();
-            utilitarios.exibirLogo();
-            if (!usuario.validarUsuario()) {
+
+        fucionalidadeConsole.limparConsole();
+        utilitarios.exibirLogo();
+        usuario = usuario.validarUsuario();
+        while (true) {
+            if (usuario == null) {
                 utilitarios.senhaIncorreta();
                 Thread.sleep(2000);
+                fucionalidadeConsole.limparConsole();
+                utilitarios.exibirLogo();
+                usuario = new Usuario();
+                usuario = usuario.validarUsuario();
             } else {
                 fucionalidadeConsole.limparConsole();
                 utilitarios.exibirBemVindo();
                 Thread.sleep(2000);
                 break;
             }
-        } while (true);
+        }
+
+        if (daoMaquina.validarMaquinaSqlServer(maquina.getIdPorcessador()) == null) {
+            maquina.cadastrarMaquina(maquina);
+        }
+
+        Usuario finalUsuario = usuario;
 
 
-
-        Thread thread01 = new Thread(() -> {
-            try{
-                maquina.monitoramento(maquina);
-            } catch (InterruptedException | SQLException e) {
-                e.printStackTrace();
+        Thread thread01 = new Thread() {
+            public void run() {
+                try {
+                    maquina.monitoramento(maquina, finalUsuario);
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
             }
-        });
+        };
 
-        Thread thread02 = new Thread(() -> {
-            utilitarios.mensagemInformativa();
-            utilitarios.exibirMenuSelecao();
-            thread01.start();
-        });
+        Thread thread02 = new Thread() {
+            public void run() {
+                utilitarios.exibirMenuSelecao();
+            }
 
+        };
+
+        thread01.start();
         thread02.start();
 
     }

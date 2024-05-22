@@ -25,6 +25,7 @@ public class Maquina {
     private String sistemaOperacional;
     private Integer arquitetura;
     private Integer idSetor;
+    private Integer idEmpresa;
 
 
     private List<Componente> componentes;
@@ -58,14 +59,13 @@ public class Maquina {
         componentes = new ArrayList<>();
     }
 
-    public void monitoramento(Maquina maquina) throws SQLException, InterruptedException {
+    public void monitoramento(Maquina maquina, Usuario usuario) throws SQLException, InterruptedException {
         DaoMaquina daoMaquina = new DaoMaquinaImple();
         DaoComponente daoComponente = new DaoComponenteImple();
         DaoRegistro daoRegistro = new DaoRegistroImple();
         DaoJanelasBloqueadas daoJanelasBloqueadas = new DaoJanelasBloqueadasImple();
         FucionalidadeConsole fucionalidadeConsole = new FucionalidadeConsole();
         JanelasBloqueadas janelasBloqueadas = new JanelasBloqueadas();
-        List<String> listaBloqueio = new ArrayList<>();
 
 
         if (daoMaquina.validarMaquinaSqlServer(locca.getProcessador().getId()) != null) {
@@ -73,38 +73,23 @@ public class Maquina {
             maquina.setIdSetor(daoMaquina.validarMaquinaSqlServer(locca.getProcessador().getId()).getIdSetor());
             maquina.setId(daoMaquina.validarMaquinaSqlServer(locca.getProcessador().getId()).getId());
 
-
-            Componente componenteRam = new Componente();
-            Componente componenteCpu = new Componente();
-
             setComponentes(daoComponente.buscarComponenteSqlServer(maquina));
-            setComponentes(daoComponente.buscarComponenteMysql(maquina));
 
-            List<Componente> componentesDisco = new ArrayList<>();
-            for (int i = 0; i < listarComponentes().size(); i++) {
-                if (listarComponentes().get(i).getTipo().contains("Memória Ram")) {
-                    componenteRam = listarComponentes().get(i);
-                } else if (listarComponentes().get(i).getTipo().contains("Processador")) {
-                    componenteCpu = listarComponentes().get(i);
-                } else if (listarComponentes().get(i).getTipo().contains("Disco")) {
-                    componentesDisco.add(listarComponentes().get(i));
-                }
-            }
-
+            List<String> listaBloqueio;
+            List<Componente> componentes = maquina.listarComponentes();
 
             while (true) {
-                daoRegistro.inserirRegistroTempoReal(componenteRam);
-                daoRegistro.inserirRegistroTempoReal(componenteCpu);
-                for (Componente componenteVez : componentesDisco) {
-                    daoRegistro.inserirRegistroTempoReal(componenteVez);
+
+                for (Componente componente : componentes) {
+                    daoRegistro.inserirRegistroTempoReal(maquina);
                 }
+
                 fucionalidadeConsole.limparConsole();
-
-                listaBloqueio = daoJanelasBloqueadas.buscarJanelasBloqueadasSqlServer(maquina.getIdSetor());
+                Utilitarios utilitarios = new Utilitarios();
+                utilitarios.mensagemInformativa();
+                listaBloqueio = daoJanelasBloqueadas.buscarJanelasBloqueadasSqlServer(daoJanelasBloqueadas.buscarCadsAtivosNoSetorSql(maquina.getIdSetor(), usuario.getIdEmpresa()));
                 janelasBloqueadas.monitorarJanelas(listaBloqueio);
-                Thread.sleep(1000);
             }
-
         } else {
             utilitarios.centralizaTelaHorizontal(8);
             utilitarios.mensagemCadastroMaquina();
@@ -114,83 +99,112 @@ public class Maquina {
             if (daoMaquina.buscarSetorMaquinaSqlServer(idCadastro) == null) {
                 utilitarios.codigoIncorreto();
             } else {
-                maquina.setId(idCadastro);
-                Componente componenteRam = new Componente(
-                        "Memória Ram",
-                        registro.converterGB(looca.getMemoria().getTotal()),
-                        null,
-                        null,
-                        null,
-                        null);
-                maquina.addComponente(componenteRam);
-
-                Componente componenteCpu = new Componente(
-                        "Processador",
-                        null,
-                        null,
-                        looca.getProcessador().getFabricante(),
-                        null,
-                        looca.getProcessador().getFrequencia());
-
-                maquina.addComponente(componenteCpu);
-
-                Map<String, Componente> componentesDisco = new HashMap<>();
-
-                for (int i = 0; i < looca.getGrupoDeDiscos().getDiscos().size(); i++) {
-                    Componente componenteDisco = new Componente(
-                            "Disco " + (i + 1),
-                            registro.converterGB(looca.getGrupoDeDiscos().getVolumes().get(i).getTotal()),
-                            registro.converterGB(looca.getGrupoDeDiscos().getVolumes().get(i).getDisponivel()),
-                            looca.getGrupoDeDiscos().getDiscos().get(i).getModelo(),
-                            null,
-                            null
-                    );
-
-                    Integer idComponenteDisco;
-
-                    idComponenteDisco = daoComponente.cadastrarComponenteSqlServer(componenteDisco, idCadastro);
-                    idComponenteDisco = daoComponente.cadastrarComponenteMysql(componenteDisco, idCadastro);
-
-                    componenteDisco.setIdComponente(idComponenteDisco);
-
-                    // Adiciona o componente ao mapa com a chave única
-                    componentesDisco.put("componenteDisco" + (i + 1), componenteDisco);
-
-                    maquina.addComponente(componenteDisco);
-                }
-
-                daoMaquina.cadastrarMaquinaSqlServer(idCadastro, maquina);
-                daoMaquina.cadastrarMaquinaMysql(idCadastro, maquina);
-
-                maquina.setIdSetor(daoMaquina.validarMaquinaSqlServer(locca.getProcessador().getId()).getIdSetor());
-                maquina.setId(daoMaquina.validarMaquinaSqlServer(locca.getProcessador().getId()).getId());
-                componenteRam.setIdComponente(daoComponente.cadastrarComponenteSqlServer(componenteRam, idCadastro));
-                componenteCpu.setIdComponente(daoComponente.cadastrarComponenteSqlServer(componenteCpu, idCadastro));
-                componenteRam.setIdComponente(daoComponente.cadastrarComponenteMysql(componenteRam, idCadastro));
-                componenteCpu.setIdComponente(daoComponente.cadastrarComponenteMysql(componenteCpu, idCadastro));
-
+                List<String> listaBloqueio;
 
                 while (true) {
-                    fucionalidadeConsole.limparConsole();
-                    for (Componente componente : maquina.listarComponentes()) {
-                        daoRegistro.inserirRegistroTempoReal(componente);
+
+                    for (Componente componente : componentes) {
+                        daoRegistro.inserirRegistroTempoReal(maquina);
                     }
-                    daoJanelasBloqueadas.buscarJanelasBloqueadasSqlServer(maquina.getIdSetor());
-                    daoJanelasBloqueadas.buscarJanelasBloqueadasMysql(maquina.getIdSetor());
+
+                    fucionalidadeConsole.limparConsole();
+                    Utilitarios utilitarios = new Utilitarios();
                     utilitarios.mensagemInformativa();
-                    listaBloqueio = daoJanelasBloqueadas.buscarJanelasBloqueadasSqlServer(maquina.getIdSetor());
+                    listaBloqueio = daoJanelasBloqueadas.buscarJanelasBloqueadasSqlServer(daoJanelasBloqueadas.buscarCadsAtivosNoSetorSql(maquina.getIdSetor(), usuario.getIdEmpresa()));
                     janelasBloqueadas.monitorarJanelas(listaBloqueio);
-                    Thread.sleep(1000);
                 }
             }
         }
     }
+
+    public void cadastrarMaquina(Maquina maquina) throws SQLException {
+        DaoMaquina daoMaquina = new DaoMaquinaImple();
+        DaoComponente daoComponente = new DaoComponenteImple();
+        Scanner sc = new Scanner(System.in);
+
+        Integer idCadastro = null;
+        boolean codigoValido = false;
+
+        utilitarios.centralizaTelaHorizontal(8);
+        utilitarios.mensagemCadastroMaquina();
+        utilitarios.centralizaTelaHorizontal(8);
+
+        while (!codigoValido) {
+            System.out.print("Insira o código aqui: ");
+            idCadastro = sc.nextInt();
+            if (daoMaquina.buscarSetorMaquinaSqlServer(idCadastro) == null) {
+                utilitarios.codigoIncorreto();
+            } else {
+                codigoValido = true;
+            }
+        }
+
+        maquina.setId(idCadastro);
+        Componente componenteRam = new Componente(
+                "Memória Ram",
+                registro.converterGB(looca.getMemoria().getTotal()),
+                null,
+                null,
+                null,
+                null);
+        maquina.addComponente(componenteRam);
+
+        Componente componenteCpu = new Componente(
+                "Processador",
+                null,
+                null,
+                looca.getProcessador().getFabricante(),
+                null,
+                looca.getProcessador().getFrequencia());
+
+        maquina.addComponente(componenteCpu);
+
+        Map<String, Componente> componentesDisco = new HashMap<>();
+
+        for (int i = 0; i < looca.getGrupoDeDiscos().getDiscos().size(); i++) {
+            Componente componenteDisco = new Componente(
+                    "Disco " + (i + 1),
+                    registro.converterGB(looca.getGrupoDeDiscos().getVolumes().get(i).getTotal()),
+                    registro.converterGB(looca.getGrupoDeDiscos().getVolumes().get(i).getDisponivel()),
+                    looca.getGrupoDeDiscos().getDiscos().get(i).getModelo(),
+                    null,
+                    null
+            );
+
+            Integer idComponenteDisco;
+            idComponenteDisco = daoComponente.cadastrarComponenteSqlServer(componenteDisco, idCadastro);
+            daoComponente.cadastrarComponenteMysql(componenteDisco, idCadastro);
+            componenteDisco.setIdComponente(idComponenteDisco);
+            componentesDisco.put("componenteDisco" + (i + 1), componenteDisco);
+            maquina.addComponente(componenteDisco);
+        }
+
+        daoMaquina.cadastrarMaquinaSqlServer(idCadastro, maquina);
+        daoMaquina.cadastrarMaquinaMysql(idCadastro, maquina);
+
+        maquina.setIdSetor(daoMaquina.validarMaquinaSqlServer(looca.getProcessador().getId()).getIdSetor());
+        maquina.setId(daoMaquina.validarMaquinaSqlServer(looca.getProcessador().getId()).getId());
+        componenteRam.setIdComponente(daoComponente.cadastrarComponenteSqlServer(componenteRam, idCadastro));
+        componenteCpu.setIdComponente(daoComponente.cadastrarComponenteSqlServer(componenteCpu, idCadastro));
+        componenteRam.setIdComponente(daoComponente.cadastrarComponenteMysql(componenteRam, idCadastro));
+        componenteCpu.setIdComponente(daoComponente.cadastrarComponenteMysql(componenteCpu, idCadastro));
+    }
+
+
     public List<Componente> listarComponentes() {
         return componentes;
     }
 
     public void setComponentes(List<Componente> componentes) {
         this.componentes = componentes;
+    }
+
+    public Integer getIdEmpresa() {
+        return idEmpresa;
+    }
+
+    public void setIdEmpresa(Integer idEmpresa) {
+        this.idEmpresa = idEmpresa;
     }
 
     public void addComponente(Componente componente) {
