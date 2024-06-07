@@ -2,28 +2,39 @@ package org.example.entities;
 
 import org.example.dao.Implementation.DaoUsuarioImple;
 import org.example.utilities.Utilitarios;
+import org.example.utilities.log.Log;
 
 import java.io.Console;
+import java.io.IOException;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Scanner;
 
 public class Usuario {
+
+
+    private Integer id;
     private String nome;
     private String email;
     private String senha;
+    private String cargo;
     private String login;
     private Integer idEmpresa;
+
+
 
     Console console = System.console();
 
     public Usuario() {
     }
 
-    public Usuario(String nome, String email, String senha, String login, Integer idEmpresa) {
+    public Usuario(String nome, String cargo, String email, String senha, String login, Integer idEmpresa) {
         this.nome = nome;
         this.email = email;
         this.senha = senha;
         this.login = login;
+        this.cargo = cargo;
         this.idEmpresa = idEmpresa;
     }
 
@@ -33,7 +44,9 @@ public class Usuario {
         this.login = login;
     }
 
-    public Usuario validarUsuario() throws SQLException {
+    public Usuario validarUsuario() throws SQLException, IOException {
+
+
         Usuario usuario = new Usuario();
         Scanner sc = new Scanner(System.in);
         Utilitarios utilitarios = new Utilitarios();
@@ -53,11 +66,11 @@ public class Usuario {
         }
 
         DaoUsuarioImple daoUsuario = new DaoUsuarioImple();
-
         if (!login.equals(null) && !login.equals("") && !senha.equals(null) && !senha.equals("")) {
             usuario = daoUsuario.validarUsuarioSql(login, senha);
             if (usuario.getNome() == null) {
                 return null;
+
             }
         }
         return usuario;
@@ -69,6 +82,22 @@ public class Usuario {
 
     public void setIdEmpresa(Integer idEmpresa) {
         this.idEmpresa = idEmpresa;
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public String getCargo() {
+        return cargo;
+    }
+
+    public void setCargo(String cargo) {
+        this.cargo = cargo;
     }
 
     public String getNome() {

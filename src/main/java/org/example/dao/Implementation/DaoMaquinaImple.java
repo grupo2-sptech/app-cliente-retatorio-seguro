@@ -3,8 +3,11 @@ package org.example.dao.Implementation;
 import org.example.database.ConexaoMysql;
 import org.example.database.ConexaoSQLServer;
 import org.example.entities.Maquina;
+import org.example.entities.Usuario;
 import org.example.utilities.console.FucionalidadeConsole;
+import org.example.utilities.log.Log;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -12,15 +15,21 @@ import java.sql.SQLException;
 
 public class DaoMaquinaImple implements org.example.dao.DaoMaquina {
 
+    Log logTeste = new Log();
+    private Connection connSql = null;
+    private Connection connMysql = null;
+    private PreparedStatement st = null;
+    private ResultSet rs = null;
+
     public Maquina validarMaquinaMysql(String idProcessador) {
-        Connection conn = null;
-        PreparedStatement st = null;
-        ResultSet rs = null;
-        conn = ConexaoMysql.getConection();
+
+        if (connMysql == null) {
+            connMysql = ConexaoMysql.getConection();
+        }
 
         Maquina maquina = new Maquina();
         try {
-            st = conn.prepareStatement("SELECT * FROM maquina WHERE processador_id = ?");
+            st = connMysql.prepareStatement("SELECT * FROM maquina WHERE processador_id = ?");
             st.setString(1, idProcessador);
             rs = st.executeQuery();
             if (rs.next()) {
@@ -34,48 +43,56 @@ public class DaoMaquinaImple implements org.example.dao.DaoMaquina {
                 return null;
             }
         } catch (SQLException e) {
-            System.out.println("Erro ao validar maquina: " + e.getMessage());
-        } finally {
-            // ConexaoMysql.closeStatementAndResultSet(st, rs, conn);
+            try {
+                logTeste.geradorLog("[" + logTeste.fomatarHora() + "] Erro: " + "Erro ao validar maquina: " + e.getMessage(), "erro de conexao maquina");
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
         }
         return maquina;
     }
 
-    public Maquina validarMaquinaSqlServer(String idProcessador) throws SQLException {
-        Connection conn = null;
-        PreparedStatement st = null;
-        ResultSet rs = null;
-        conn = ConexaoSQLServer.getConection();
+    public Maquina validarMaquinaSqlServer(Maquina maquina, Usuario usuario) throws SQLException {
 
-        Maquina maquina = new Maquina();
+        if (connSql == null) {
+            connSql = ConexaoSQLServer.getConection();
+        }
+
+        Maquina maquinaReturn = new Maquina();
         try {
-            st = conn.prepareStatement("SELECT * FROM maquina WHERE processador_id = ?");
-            st.setString(1, idProcessador);
+            st = connSql.prepareStatement("SELECT * FROM maquina WHERE processador_id = ? AND fk_empresa = ? AND num_mac = ?;");
+            st.setString(1, maquina.getIdPorcessador());
+            st.setInt(2, usuario.getIdEmpresa());
+            st.setString(3, maquina.getMac());
             rs = st.executeQuery();
             if (rs.next()) {
-                maquina.setId(rs.getInt("id_maquina"));
-                maquina.setIdPorcessador(rs.getString("processador_id"));
-                maquina.setSistemaOperacional(rs.getString("sistema_operacional"));
-                maquina.setMemorialTotal(rs.getDouble("memoria_total_maquina"));
-                maquina.setArquitetura(rs.getInt("arquitetura"));
-                maquina.setIdSetor(rs.getInt("fk_setor"));
-                maquina.setIdEmpresa(rs.getInt("fk_empresa"));
+                maquinaReturn.setId(rs.getInt("id_maquina"));
+                maquinaReturn.setIdPorcessador(rs.getString("processador_id"));
+                maquinaReturn.setMac(rs.getString("num_mac"));
+                maquinaReturn.setNome(rs.getString("nome_maquina"));
+                maquinaReturn.setSistemaOperacional(rs.getString("sistema_operacional"));
+                maquinaReturn.setMemorialTotal(rs.getDouble("memoria_total_maquina"));
+                maquinaReturn.setArquitetura(rs.getInt("arquitetura"));
+                maquinaReturn.setIdSetor(rs.getInt("fk_setor"));
+                maquinaReturn.setIdEmpresa(rs.getInt("fk_empresa"));
             } else {
                 return null;
             }
         } catch (SQLException e) {
-            System.out.println("Erro ao validar maquina: " + e.getMessage());
-        } finally {
-            // ConexaoMysql.closeStatementAndResultSet(st, rs, conn);
+            try {
+                logTeste.geradorLog("[" + logTeste.fomatarHora() + "] Erro: " + "Erro ao validar maquina: " + e.getMessage(), "erro de conexao maquina");
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
         }
-        return maquina;
+        return maquinaReturn;
     }
 
     public void cadastrarMaquinaMysql(Integer id_cadastro, Maquina maquina) throws SQLException {
-        Connection connMysql = null;
-        PreparedStatement st = null;
-        ResultSet rs = null;
-        connMysql = ConexaoMysql.getConection();
+
+        if (connMysql == null) {
+            connMysql = ConexaoMysql.getConection();
+        }
         try {
             st = connMysql.prepareStatement("""
                     UPDATE maquina SET processador_id = ?, sistema_operacional = ?, memoria_total_maquina = ?, arquitetura = ? WHERE id_maquina = ?;
@@ -87,75 +104,86 @@ public class DaoMaquinaImple implements org.example.dao.DaoMaquina {
             st.setInt(5, id_cadastro);
             st.executeUpdate();
         } catch (SQLException e) {
-            System.out.println("Erro ao cadastrar maquina: " + e.getMessage());
-        } finally {
-            //  ConexaoMysql.closeStatementAndResultSet(st, rs, conn);
+            try {
+                logTeste.geradorLog("[" + logTeste.fomatarHora() + "] Erro: " + "Erro ao cadastrar maquina: " + e.getMessage(), "erro de conexao maquina");
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+
         }
     }
 
     public void cadastrarMaquinaSqlServer(Integer id_cadastro, Maquina maquina) throws SQLException {
-        Connection conn = null;
-        PreparedStatement st = null;
-        ResultSet rs = null;
-        conn = ConexaoSQLServer.getConection();
+
+        if (connSql == null) {
+            connSql = ConexaoSQLServer.getConection();
+        }
         try {
-            st = conn.prepareStatement("""
-                    UPDATE maquina SET processador_id = ?, sistema_operacional = ?, memoria_total_maquina = ?, arquitetura = ? WHERE id_maquina = ?;
+            st = connSql.prepareStatement("""
+                    UPDATE maquina SET processador_id = ?, num_mac = ?, sistema_operacional = ?, memoria_total_maquina = ?, arquitetura = ? WHERE id_maquina = ?;
                     """);
             st.setString(1, maquina.getIdPorcessador());
-            st.setString(2, maquina.getSistemaOperacional());
-            st.setDouble(3, maquina.getMemorialTotal());
-            st.setInt(4, maquina.getArquitetura());
-            st.setInt(5, id_cadastro);
+            st.setString(2, maquina.getMac());
+            st.setString(3, maquina.getSistemaOperacional());
+            st.setDouble(4, maquina.getMemorialTotal());
+            st.setInt(5, maquina.getArquitetura());
+            st.setInt(6, id_cadastro);
             st.executeUpdate();
         } catch (SQLException e) {
-            System.out.println("Erro ao cadastrar maquina: " + e.getMessage());
-        } finally {
-            //  ConexaoMysql.closeStatementAndResultSet(st, rs, conn);
+            try {
+                logTeste.geradorLog("[" + logTeste.fomatarHora() + "] Erro: " + "Erro ao cadastrar maquina: " + e.getMessage(), "erro de conexao maquina");
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
         }
     }
 
     public Integer buscarSetorMaquinaMysql(Integer idMaquina) {
-        Connection conn = null;
-        PreparedStatement st = null;
-        ResultSet rs = null;
-        conn = ConexaoMysql.getConection();
-        if (conn == null) {
+        if (connMysql == null) {
+            connMysql = ConexaoMysql.getConection();
+        }
+        if (connMysql == null) {
             FucionalidadeConsole fucionalidadeConsole = new FucionalidadeConsole();
             fucionalidadeConsole.limparConsole();
         } else {
             try {
-                st = conn.prepareStatement("SELECT fk_setor FROM maquina WHERE id_maquina = ?;");
+                st = connMysql.prepareStatement("SELECT fk_setor FROM maquina  WHERE id_maquina = ?;");
                 st.setInt(1, idMaquina);
                 rs = st.executeQuery();
                 if (rs.next()) {
                     return rs.getInt("fk_setor");
                 }
             } catch (SQLException e) {
-                System.out.println("Erro ao capturar dados do setor: " + e.getMessage());
-            } finally {
-                // ConexaoMysql.closeStatementAndResultSet(st, rs, conn);
+                try {
+                    logTeste.geradorLog("[" + logTeste.fomatarHora() + "] Erro: " + "Erro ao capturar dados do setor: " + e.getMessage(), "erro de conexao maquina");
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
             }
         }
         return null;
     }
 
     public Integer buscarSetorMaquinaSqlServer(Integer idMaquina) throws SQLException {
-        Connection conn = null;
-        PreparedStatement st = null;
-        ResultSet rs = null;
-        conn = ConexaoSQLServer.getConection();
+
+        if (connSql == null) {
+            connSql = ConexaoSQLServer.getConection();
+        }
+
         try {
-            st = conn.prepareStatement("SELECT fk_setor FROM maquina WHERE id_maquina = ?;");
+            st = connSql.prepareStatement("SELECT fk_setor FROM maquina WHERE id_maquina = ?;");
             st.setInt(1, idMaquina);
             rs = st.executeQuery();
             if (rs.next()) {
                 return rs.getInt("fk_setor");
             }
         } catch (SQLException e) {
-            System.out.println("Erro ao capturar dados do setor: " + e.getMessage());
-        } finally {
-            // ConexaoMysql.closeStatementAndResultSet(st, rs, conn);
+            try {
+                logTeste.geradorLog("[" + logTeste.fomatarHora() + "] Erro: " + "Erro ao capturar dados do setor: " + e.getMessage(), "erro de conexao maquina");
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+
         }
         return null;
     }

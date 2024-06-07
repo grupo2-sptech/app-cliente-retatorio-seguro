@@ -1,11 +1,13 @@
 package org.example.dao.Implementation;
 
-import org.example.database.Conexao;
 import org.example.database.ConexaoMysql;
 import org.example.database.ConexaoSQLServer;
 import org.example.database.DatabaseExeption;
 import org.example.entities.Usuario;
+import org.example.utilities.Slack;
+import org.example.utilities.log.Log;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -14,6 +16,7 @@ import java.sql.SQLException;
 
 public class DaoUsuarioImple implements org.example.dao.DaoUsuario {
 
+    Log logTeste = new Log();
     private Connection conn = null;
     private PreparedStatement st = null;
     private ResultSet rs = null;
@@ -36,7 +39,11 @@ public class DaoUsuarioImple implements org.example.dao.DaoUsuario {
                 usuario.setIdEmpresa(rs.getInt("fk_empresa"));
             }
         } catch (SQLException e) {
-            System.out.println("Erro ao Validar Usuario MYSQL: " + e.getMessage());
+            try {
+                logTeste.geradorLog("[" + logTeste.fomatarHora() + "] Erro: " + "Erro ao Validar Usuario MYSQL: " + e.getMessage(), "erro de conexao usuario");
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
         }
         return usuario;
     }
@@ -59,16 +66,53 @@ public class DaoUsuarioImple implements org.example.dao.DaoUsuario {
                 st.setString(4, senha);
                 rs = st.executeQuery();
                 if (rs.next()) {
+                    usuario.setId(rs.getInt("id_funcionario"));
                     usuario.setNome(rs.getString("nome_funcionario"));
-                    usuario.setEmail(rs.getString("email_funcionario"));
+                    usuario.setLogin(rs.getString("login_acesso"));
+                    usuario.setCargo(rs.getString("cargo_funcionario"));
                     usuario.setIdEmpresa(rs.getInt("fk_empresa"));
                 }
             } catch (SQLException e) {
-                System.out.println("Erro ao validar usuario SQL SERVER: " + e.getMessage());
-            } finally {
-              //  Conexao.closeStatementAndResultSet(st, rs, conn);
+                try {
+                    logTeste.geradorLog("[" + logTeste.fomatarHora() + "] Erro: " + "Erro ao validar usuario SQL SERVER: " + e.getMessage(), "erro de conexao usuario");
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
             }
         }
         return usuario;
     }
+
+
+    public Slack getTokenSlack(Usuario usuario) throws DatabaseExeption, SQLException {
+
+        Slack slack = new Slack();
+
+        conn = ConexaoSQLServer.getConection();
+        if (conn == null) {
+            System.exit(0);
+        } else {
+            try {
+                st = conn.prepareStatement("""
+                               SELECT e.token_slack, e.canal_slack, e.web_url_slack
+                                   FROM empresa as e where id_empresa = ?;                
+                        """);
+                st.setInt(1, usuario.getIdEmpresa());
+                rs = st.executeQuery();
+                if (rs.next()) {
+                    slack.setToken(rs.getString("token_slack"));
+                    slack.setCanal(rs.getString("canal_slack"));
+                    slack.setWebUrl(rs.getString("web_url_slack"));
+                }
+            } catch (SQLException e) {
+                try {
+                    logTeste.geradorLog("[" + logTeste.fomatarHora() + "] Erro: " + "Erro ao obter token slack: " + e.getMessage(), "erro de conexao usuario");
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
+            }
+        }
+        return slack;
+    }
+
 }

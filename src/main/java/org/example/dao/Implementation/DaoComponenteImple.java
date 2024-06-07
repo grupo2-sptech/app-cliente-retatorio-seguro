@@ -5,7 +5,9 @@ import org.example.database.ConexaoSQLServer;
 import org.example.entities.Componente;
 import org.example.entities.Maquina;
 import org.example.utilities.console.FucionalidadeConsole;
+import org.example.utilities.log.Log;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -15,15 +17,21 @@ import java.util.List;
 
 public class DaoComponenteImple implements org.example.dao.DaoComponente {
 
+    Log logTeste = new Log();
+    private Connection connSql = null;
+    private Connection connMysql = null;
+    private PreparedStatement st = null;
+    private ResultSet rs = null;
+
     public Integer cadastrarComponenteMysql(Componente componente, Integer idMaquina) {
-        Connection conn = null;
-        PreparedStatement st = null;
-        ResultSet rs = null;
+
+        if (connMysql == null) {
+            connMysql = ConexaoMysql.getConection();
+        }
+
         Integer idInserido = 0;
         try {
-            conn = ConexaoMysql.getConection();
-
-            st = conn.prepareStatement("""
+            st = connMysql.prepareStatement("""
                             INSERT INTO componente (tipo_componente, tamanho_total_gb, tamanho_disponivel_gb, modelo, frequencia, fabricante, fk_maquina) VALUES (?,?,?,?,?,?,?);
                     """, st.RETURN_GENERATED_KEYS);
 
@@ -44,7 +52,11 @@ public class DaoComponenteImple implements org.example.dao.DaoComponente {
                 }
             }
         } catch (SQLException e) {
-            System.out.println("Erro ao cadastrar componente: " + e.getMessage());
+            try {
+                logTeste.geradorLog("[" + logTeste.fomatarHora() + "] Erro: " + "Erro ao cadastrar componente: " + e.getMessage(), "erro de conexao componente");
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
         }
         return idInserido;
     }
@@ -78,22 +90,26 @@ public class DaoComponenteImple implements org.example.dao.DaoComponente {
                 }
             }
         } catch (SQLException e) {
-            System.out.println("Erro ao cadastrar componente: " + e.getMessage());
+            try {
+                logTeste.geradorLog("[" + logTeste.fomatarHora() + "] Erro: " + "Erro ao cadastrar componente: " + e.getMessage(), "erro de conexao componente");
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
         }
         return idInserido;
     }
 
 
     public List<Componente> buscarComponenteMysql(Maquina maquina) {
-        Connection conn = null;
-        PreparedStatement st = null;
-        ResultSet rs = null;
 
         List<Componente> componentes = new ArrayList<>();
 
+        if (connMysql == null) {
+            connMysql = ConexaoMysql.getConection();
+        }
+
         try {
-            conn = ConexaoMysql.getConection();
-            st = conn.prepareStatement("SELECT componente.* FROM componente join maquina on id_maquina = fk_maquina WHERE fk_maquina = ?;");
+            st = connMysql.prepareStatement("SELECT componente.* FROM componente join maquina on id_maquina = fk_maquina WHERE fk_maquina = ?;");
             st.setInt(1, maquina.getId());
             rs = st.executeQuery();
             while (rs.next()) {
@@ -108,7 +124,11 @@ public class DaoComponenteImple implements org.example.dao.DaoComponente {
                 componentes.add(componente);
             }
         } catch (SQLException e) {
-            System.out.println("Erro ao buscar componente: " + e.getMessage());
+            try {
+                logTeste.geradorLog("[" + logTeste.fomatarHora() + "] Erro: " + "Erro ao buscar componente: " + e.getMessage(), "erro de conexao componente");
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
         }
         return componentes;
     }
@@ -142,7 +162,11 @@ public class DaoComponenteImple implements org.example.dao.DaoComponente {
                 }
             }
         } catch (SQLException e) {
-            System.out.println("Erro ao buscar componente: " + e.getMessage());
+            try {
+                logTeste.geradorLog("[" + logTeste.fomatarHora() + "] Erro: " + "Erro ao buscar componente: " + e.getMessage(), "erro de conexao componente");
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
         }
         return componentes;
     }
